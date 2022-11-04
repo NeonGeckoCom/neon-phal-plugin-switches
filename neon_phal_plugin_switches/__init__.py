@@ -68,13 +68,11 @@ class SwitchInputs(PHALPlugin):
         self.bus.emit(Message("mycroft.volume.decrease"))
 
     def on_hardware_mute(self):
-        """Called when hardware switch is set to mute"""
-        # Triggers red border and LED ring
+        LOG.debug("mic HW muted")
         self.bus.emit(Message("mycroft.mic.mute"))
 
     def on_hardware_unmute(self):
-        """Called when hardware switch is set to unmute"""
-        # Removes red border and LED ring
+        LOG.debug("mic HW unmuted")
         self.bus.emit(Message("mycroft.mic.unmute"))
 
     def shutdown(self):
