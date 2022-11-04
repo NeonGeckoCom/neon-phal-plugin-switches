@@ -45,6 +45,7 @@ class SwitchInputs(PHALPlugin):
     def __init__(self, bus=None, config=None):
         super().__init__(bus=bus, name="neon-phal-plugin-switches",
                          config=config)
+        # TODO: Make this more generic
         self.switches = R6Switches()
         self.switches.on_mute = self.on_hardware_mute
         self.switches.on_unmute = self.on_hardware_unmute
@@ -54,6 +55,15 @@ class SwitchInputs(PHALPlugin):
 
         if self.switches.SW_MUTE == 1:
             self.bus.emit(Message('mycroft.mic.mute'))
+
+        self.bus.on('mycroft.mic.status', self.on_mic_status)
+
+    def on_mic_status(self, message):
+        if self.switches.SW_MUTE == 1:
+            msg_type = 'mycroft.mic.mute'
+        else:
+            msg_type = 'mycroft.mic.unmute'
+        self.bus.emit(message.reply(msg_type))
 
     def on_button_press(self):
         LOG.info("Listen button pressed")
