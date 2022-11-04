@@ -52,6 +52,9 @@ class SwitchInputs(PHALPlugin):
         self.switches.on_vol_up = self.on_button_volup_press
         self.switches.on_vol_down = self.on_button_voldown_press
 
+        if self.switches.SW_MUTE == 1:
+            self.bus.emit(Message('mycroft.mic.mute'))
+
     def on_button_press(self):
         LOG.info("Listen button pressed")
         self.bus.emit(Message("mycroft.mic.listen"))
