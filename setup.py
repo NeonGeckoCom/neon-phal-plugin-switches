@@ -29,7 +29,7 @@
 from setuptools import setup, find_packages
 from os import path, getenv
 
-PLUGIN_ENTRY_POINT = "neon-phal-plugin-fan=neon_phal_plugin_switches:SwitchInputs"
+PLUGIN_ENTRY_POINT = "neon-phal-plugin-switches=neon_phal_plugin_switches:SwitchInputs"
 BASEDIR = path.abspath(path.dirname(__file__))
 
 
