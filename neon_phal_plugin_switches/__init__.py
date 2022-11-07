@@ -28,6 +28,7 @@
 
 import RPi.GPIO as GPIO
 
+from abc import ABC
 from time import sleep
 from ovos_plugin_manager.phal import PHALPlugin
 from ovos_plugin_manager.hardware.switches import AbstractSwitches
@@ -39,6 +40,7 @@ from sj201_interface.revisions import detect_sj201_revision
 class SwitchValidator:
     @staticmethod
     def validate(_=None):
+        # TODO: More generic validation
         return detect_sj201_revision() is not None
 
 
@@ -48,7 +50,7 @@ class SwitchInputs(PHALPlugin):
     def __init__(self, bus=None, config=None):
         super().__init__(bus=bus, name="neon-phal-plugin-switches",
                          config=config)
-        # TODO: Make this more generic
+        # TODO: Read pins from configuration
         self.switches = GPIOSwitches(action_callback=self.on_button_press,
                                      volup_callback=self.on_button_volup_press,
                                      voldown_callback=self.on_button_voldown_press,
@@ -60,13 +62,13 @@ class SwitchInputs(PHALPlugin):
         self.switches.on_vol_up = self.on_button_volup_press
         self.switches.on_vol_down = self.on_button_voldown_press
 
-        if GPIO.input(self.switches.mute_pin) == self.switches._muted:
+        if GPIO.input(self.switches.mute_pin) == self.switches.muted:
             self.bus.emit(Message('mycroft.mic.mute'))
 
         self.bus.on('mycroft.mic.status', self.on_mic_status)
 
     def on_mic_status(self, message):
-        if GPIO.input(self.switches.mute_pin) == self.switches._muted:
+        if GPIO.input(self.switches.mute_pin) == self.switches.muted:
             msg_type = 'mycroft.mic.mute'
         else:
             msg_type = 'mycroft.mic.unmute'
@@ -93,7 +95,7 @@ class SwitchInputs(PHALPlugin):
         self.bus.emit(Message("mycroft.mic.unmute"))
 
 
-class GPIOSwitches(AbstractSwitches):
+class GPIOSwitches(AbstractSwitches, ABC):
     def __init__(self, action_callback, volup_callback, voldown_callback,
                  mute_callback, unmute_callback, volup_pin: int = 22,
                  voldown_pin: int = 23, action_pin: int = 24,
@@ -113,6 +115,13 @@ class GPIOSwitches(AbstractSwitches):
         self._muted = sw_muted_state
 
         self.setup_gpio()
+
+    @property
+    def muted(self):
+        """
+        Returns the state associated with 'mute' (0 for low, 1 for hi)
+        """
+        return self._muted
 
     def setup_gpio(self, debounce=100):
         """
