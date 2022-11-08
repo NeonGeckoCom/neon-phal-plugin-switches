@@ -76,7 +76,11 @@ class SwitchInputs(PHALPlugin):
 
     def on_button_press(self):
         LOG.info("Listen button pressed")
-        self.bus.emit(Message("mycroft.mic.listen"))
+        if GPIO.input(self.switches.mute_pin) != self.switches.muted:
+            self.bus.emit(Message("mycroft.mic.listen"))
+        else:
+            self.bus.emit(Message("mycroft.mic.error",
+                                  {"error": "mic_sw_muted"}))
 
     def on_button_volup_press(self):
         LOG.debug("VolumeUp button pressed")
