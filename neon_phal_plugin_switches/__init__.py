@@ -33,7 +33,7 @@ from time import sleep
 from ovos_plugin_manager.phal import PHALPlugin
 from ovos_plugin_manager.hardware.switches import AbstractSwitches
 from ovos_utils.log import LOG
-from mycroft_bus_client import Message
+from ovos_bus_client.message import Message
 from sj201_interface.revisions import detect_sj201_revision
 
 
