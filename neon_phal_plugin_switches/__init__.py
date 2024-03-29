@@ -26,7 +26,6 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from os.path import exists
 from abc import ABC
 from typing import Optional
 
@@ -34,15 +33,20 @@ from ovos_plugin_manager.phal import PHALPlugin
 from ovos_plugin_manager.hardware.switches import AbstractSwitches
 from ovos_utils.log import LOG
 from ovos_bus_client.message import Message
-from sj201_interface.revisions import detect_sj201_revision
-from gpiozero import Button
+from gpiozero import Button, pi_info, BadPinFactory
 
 
 class SwitchValidator:
     @staticmethod
     def validate(_=None):
-        # TODO: More generic validation that GPIO exists
-        return detect_sj201_revision() is not None
+        try:
+            pi_info()
+            return True
+        except BadPinFactory:
+            return False
+        except Exception as e:
+            LOG.info(e)
+        return False
 
 
 class SwitchInputs(PHALPlugin):

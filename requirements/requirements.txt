@@ -1,4 +1,3 @@
-sj201-interface~=0.0.2
 ovos-plugin-manager~=0.0.20
 ovos-utils~=0.0.26
 ovos-bus-client~=0.0.3
