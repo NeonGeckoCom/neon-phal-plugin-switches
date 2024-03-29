@@ -102,7 +102,7 @@ class GPIOSwitches(AbstractSwitches, ABC):
                  mute_callback: callable, unmute_callback: callable,
                  volup_pin: int = 22, voldown_pin: int = 23,
                  action_pin: int = 24, mute_pin: int = 25,
-                 sw_muted_state: int = 1, sw_pullup: bool = True):
+                 sw_muted_state: int = 1, sw_pullup: bool = False):
         """
         Creates an object to manage GPIO switches and callbacks on switch
         activity.
@@ -140,12 +140,9 @@ class GPIOSwitches(AbstractSwitches, ABC):
         @param pull_up: If true, pull up switches, else pull down
         """
 
-        Button(self.action_pin, pull_up=pull_up,
-               hold_time=0.5).when_activated = self.on_action
-        Button(self.vol_up_pin, pull_up=pull_up,
-               hold_time=0.5).when_activated = self.on_vol_up
-        Button(self.vol_dn_pin, pull_up=pull_up,
-               hold_time=0.5).when_activated = self.on_vol_down
+        Button(self.action_pin, pull_up=pull_up).when_activated = self.on_action
+        Button(self.vol_up_pin, pull_up=pull_up).when_activated = self.on_vol_up
+        Button(self.vol_dn_pin, pull_up=pull_up).when_activated = self.on_vol_down
 
         mute_active = True if bool(self._muted) == pull_up else False
         self.mute_switch = Button(self.mute_pin, pull_up=None,
