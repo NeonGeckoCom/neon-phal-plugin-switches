@@ -26,22 +26,29 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import RPi.GPIO as GPIO
-
 from abc import ABC
-from time import sleep
+from typing import Optional
+
 from ovos_plugin_manager.phal import PHALPlugin
 from ovos_plugin_manager.hardware.switches import AbstractSwitches
 from ovos_utils.log import LOG
 from ovos_bus_client.message import Message
-from sj201_interface.revisions import detect_sj201_revision
+from gpiozero import Button, Device
+from gpiozero.pins.native import NativeFactory
+from gpiozero.exc import BadPinFactory
 
 
 class SwitchValidator:
     @staticmethod
     def validate(_=None):
-        # TODO: More generic validation
-        return detect_sj201_revision() is not None
+        try:
+            Device.ensure_pin_factory()
+            return True
+        except BadPinFactory:
+            return False
+        except Exception as e:
+            LOG.info(e)
+        return False
 
 
 class SwitchInputs(PHALPlugin):
@@ -56,37 +63,33 @@ class SwitchInputs(PHALPlugin):
                                      voldown_callback=self.on_button_voldown_press,
                                      mute_callback=self.on_hardware_mute,
                                      unmute_callback=self.on_hardware_unmute)
-        self.switches.on_mute = self.on_hardware_mute
-        self.switches.on_unmute = self.on_hardware_unmute
-        self.switches.on_action = self.on_button_press
-        self.switches.on_vol_up = self.on_button_volup_press
-        self.switches.on_vol_down = self.on_button_voldown_press
 
-        if GPIO.input(self.switches.mute_pin) == self.switches.muted:
+        if self.switches.mute_switch.is_active:
+            LOG.debug(f"Mute switch active")
             self.bus.emit(Message('mycroft.mic.mute'))
 
         self.bus.on('mycroft.mic.status', self.on_mic_status)
 
     def on_mic_status(self, message):
-        if GPIO.input(self.switches.mute_pin) == self.switches.muted:
+        if self.switches.mute_switch.is_active:
             msg_type = 'mycroft.mic.mute'
         else:
             msg_type = 'mycroft.mic.unmute'
         self.bus.emit(message.reply(msg_type))
 
-    def on_button_press(self):
+    def on_button_press(self, _=None):
         LOG.info("Listen button pressed")
-        if GPIO.input(self.switches.mute_pin) != self.switches.muted:
+        if not self.switches.mute_switch.is_active:
             self.bus.emit(Message("mycroft.mic.listen"))
         else:
             self.bus.emit(Message("mycroft.mic.error",
                                   {"error": "mic_sw_muted"}))
 
-    def on_button_volup_press(self):
+    def on_button_volup_press(self, _=None):
         LOG.debug("VolumeUp button pressed")
         self.bus.emit(Message("mycroft.volume.increase"))
 
-    def on_button_voldown_press(self):
+    def on_button_voldown_press(self, _=None):
         LOG.debug("VolumeDown button pressed")
         self.bus.emit(Message("mycroft.volume.decrease"))
 
@@ -100,94 +103,81 @@ class SwitchInputs(PHALPlugin):
 
 
 class GPIOSwitches(AbstractSwitches, ABC):
-    def __init__(self, action_callback, volup_callback, voldown_callback,
-                 mute_callback, unmute_callback, volup_pin: int = 22,
-                 voldown_pin: int = 23, action_pin: int = 24,
-                 mute_pin: int = 25, sw_active_state: int = 0,
-                 sw_muted_state: int = 1):
+    def __init__(self, action_callback: callable,
+                 volup_callback: callable, voldown_callback: callable,
+                 mute_callback: callable, unmute_callback: callable,
+                 volup_pin: int = 22, voldown_pin: int = 23,
+                 action_pin: int = 24, mute_pin: int = 25,
+                 sw_muted_state: int = 1, sw_press_state: int = 0):
+        """
+        Creates an object to manage GPIO switches and callbacks on switch
+        activity.
+        @param action_callback: Called when the "Action" switch is activated
+        @param volup_callback: Called when the volume up switch is activated
+        @param voldown_callback: Called when the volume down switch is activated
+        @param mute_callback: Called when the mute switch is activated
+        @param unmute_callback: Called when the mute switch is de-activated
+        @param volup_pin: GPIO pin of the volume up switch
+        @param voldown_pin: GPIO pin of the volume down switch
+        @param action_pin: GPIO pin of the action switch
+        @param mute_pin: GPIO pin of the mute slider
+        @param sw_muted_state: mute pin state associated with muted
+        @param sw_press_state button pin state associated with a press
+        """
         self.on_action = action_callback
         self.on_vol_up = volup_callback
         self.on_vol_down = voldown_callback
         self.on_mute = mute_callback
         self.on_unmute = unmute_callback
 
+        self.mute_switch: Optional[Button] = None
+        self._buttons = list()
+
         self.vol_up_pin = volup_pin
         self.vol_dn_pin = voldown_pin
         self.action_pin = action_pin
         self.mute_pin = mute_pin
-        self._active = sw_active_state
         self._muted = sw_muted_state
 
-        self.setup_gpio()
+        self.setup_gpio(active_state=bool(sw_press_state))
 
-    @property
-    def muted(self):
-        """
-        Returns the state associated with 'mute' (0 for low, 1 for hi)
-        """
-        return self._muted
-
-    def setup_gpio(self, debounce=100):
+    def setup_gpio(self, active_state: bool = True):
         """
         Do GPIO setup.
+        @param active_state: If true, switches are active when high
         """
-        # use BCM GPIO pin numbering
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
+        factory = NativeFactory()
+        act = Button(self.action_pin, pull_up=None, active_state=active_state,
+                     pin_factory=factory)
+        act.when_activated = self.on_action
+        vol_up = Button(self.vol_up_pin, pull_up=None,
+                        active_state=active_state, pin_factory=factory)
+        vol_up.when_activated = self.on_vol_up
+        vol_down = Button(self.vol_dn_pin, pull_up=None,
+                          active_state=active_state, pin_factory=factory)
+        vol_down.when_activated = self.on_vol_down
 
-        if self._active == 0:
-            pull_up_down = GPIO.PUD_UP
-        else:
-            pull_up_down = GPIO.PUD_DOWN
-        # we need to pull up the 3 buttons and mute switch
-        GPIO.setup(self.action_pin, GPIO.IN, pull_up_down=pull_up_down)
-        GPIO.setup(self.vol_up_pin, GPIO.IN, pull_up_down=pull_up_down)
-        GPIO.setup(self.vol_dn_pin, GPIO.IN, pull_up_down=pull_up_down)
-        GPIO.setup(self.mute_pin, GPIO.IN, pull_up_down=pull_up_down)
+        self.mute_switch = Button(self.mute_pin, pull_up=None,
+                                  active_state=bool(self._muted),
+                                  pin_factory=factory)
 
-        # attach callbacks
-        GPIO.add_event_detect(self.action_pin,
-                              GPIO.BOTH,
-                              callback=self.handle_action,
-                              bouncetime=debounce)
+        self.mute_switch.when_deactivated = self.on_unmute
+        self.mute_switch.when_activated = self.on_mute
 
-        GPIO.add_event_detect(self.vol_up_pin,
-                              GPIO.BOTH,
-                              callback=self.handle_vol_up,
-                              bouncetime=debounce)
+        # Keep references to buttons to keep listeners alive until shutdown
+        self._buttons.append(act)
+        self._buttons.append(vol_up)
+        self._buttons.append(vol_down)
 
-        GPIO.add_event_detect(self.vol_dn_pin,
-                              GPIO.BOTH,
-                              callback=self.handle_vol_down,
-                              bouncetime=debounce)
-
-        GPIO.add_event_detect(self.mute_pin,
-                              GPIO.BOTH,
-                              callback=self.handle_mute,
-                              bouncetime=debounce)
-
-    def handle_action(self, _):
-        if GPIO.input(self.action_pin) == self._active:
-            self.on_action()
-
-    def handle_vol_up(self, _):
-        if GPIO.input(self.vol_up_pin) == self._active:
-            self.on_vol_up()
-
-    def handle_vol_down(self, _):
-        if GPIO.input(self.vol_dn_pin) == self._active:
-            self.on_vol_down()
-
-    def handle_mute(self, _):
-        sleep(0.05)
-        if GPIO.input(self.mute_pin) == self._muted:
-            self.on_mute()
-        else:
-            self.on_unmute()
+        LOG.info(f"Pin states: vol_up={vol_up.is_active}, "
+                 f"vol_down={vol_down.is_active}, act={act.is_active}, "
+                 f"mute={self.mute_switch.is_active}")
 
     @property
     def capabilities(self) -> dict:
         return {}
 
     def shutdown(self):
-        pass
+        # Release GPIO buttons explicitly
+        self._buttons = None
+        self.mute_switch = None
