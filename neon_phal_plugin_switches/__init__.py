@@ -158,6 +158,10 @@ class GPIOSwitches(AbstractSwitches, ABC):
         self.mute_switch.when_deactivated = self.on_unmute
         self.mute_switch.when_activated = self.on_mute
 
+        LOG.info(f"Pin states: vol_up={vol_up.is_active}, "
+                 f"vol_down={vol_down.is_active}, act={act.is_active}, "
+                 f"mute={self.mute_switch.is_active}")
+
     @property
     def capabilities(self) -> dict:
         return {}
