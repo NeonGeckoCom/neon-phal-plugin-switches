@@ -71,7 +71,7 @@ class SwitchInputs(PHALPlugin):
             msg_type = 'mycroft.mic.unmute'
         self.bus.emit(message.reply(msg_type))
 
-    def on_button_press(self):
+    def on_button_press(self, _=None):
         LOG.info("Listen button pressed")
         if not self.switches.mute_switch.is_active:
             self.bus.emit(Message("mycroft.mic.listen"))
@@ -79,11 +79,11 @@ class SwitchInputs(PHALPlugin):
             self.bus.emit(Message("mycroft.mic.error",
                                   {"error": "mic_sw_muted"}))
 
-    def on_button_volup_press(self):
+    def on_button_volup_press(self, _=None):
         LOG.debug("VolumeUp button pressed")
         self.bus.emit(Message("mycroft.volume.increase"))
 
-    def on_button_voldown_press(self):
+    def on_button_voldown_press(self, _=None):
         LOG.debug("VolumeDown button pressed")
         self.bus.emit(Message("mycroft.volume.decrease"))
 
@@ -102,7 +102,7 @@ class GPIOSwitches(AbstractSwitches, ABC):
                  mute_callback: callable, unmute_callback: callable,
                  volup_pin: int = 22, voldown_pin: int = 23,
                  action_pin: int = 24, mute_pin: int = 25,
-                 sw_muted_state: int = 1, sw_pullup: bool = False):
+                 sw_muted_state: int = 1, sw_pullup: bool = True):
         """
         Creates an object to manage GPIO switches and callbacks on switch
         activity.
@@ -140,9 +140,12 @@ class GPIOSwitches(AbstractSwitches, ABC):
         @param pull_up: If true, pull up switches, else pull down
         """
 
-        Button(self.action_pin, pull_up=pull_up).when_activated = self.on_action
-        Button(self.vol_up_pin, pull_up=pull_up).when_activated = self.on_vol_up
-        Button(self.vol_dn_pin, pull_up=pull_up).when_activated = self.on_vol_down
+        act = Button(self.action_pin, pull_up=pull_up)
+        act.when_activated = self.on_action
+        vol_up = Button(self.vol_up_pin, pull_up=pull_up)
+        vol_up.when_activated = self.on_vol_up
+        vol_down = Button(self.vol_dn_pin, pull_up=pull_up)
+        vol_down.when_activated = self.on_vol_down
 
         mute_active = True if bool(self._muted) == pull_up else False
         self.mute_switch = Button(self.mute_pin, pull_up=None,
