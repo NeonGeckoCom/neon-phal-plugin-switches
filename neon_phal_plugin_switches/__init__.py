@@ -33,15 +33,16 @@ from ovos_plugin_manager.phal import PHALPlugin
 from ovos_plugin_manager.hardware.switches import AbstractSwitches
 from ovos_utils.log import LOG
 from ovos_bus_client.message import Message
-from gpiozero import Button, pi_info, BadPinFactory, Device
+from gpiozero import Button, Device
 from gpiozero.pins.native import NativeFactory
+from gpiozero.exc import BadPinFactory
 
 
 class SwitchValidator:
     @staticmethod
     def validate(_=None):
         try:
-            pi_info()
+            Device.ensure_pin_factory()
             return True
         except BadPinFactory:
             return False
@@ -145,20 +146,20 @@ class GPIOSwitches(AbstractSwitches, ABC):
         Do GPIO setup.
         @param active_state: If true, switches are active when high
         """
-
+        factory = NativeFactory()
         act = Button(self.action_pin, pull_up=None, active_state=active_state,
-                     pin_factory=NativeFactory)
+                     pin_factory=factory)
         act.when_activated = self.on_action
         vol_up = Button(self.vol_up_pin, pull_up=None,
-                        active_state=active_state, pin_factory=NativeFactory)
+                        active_state=active_state, pin_factory=factory)
         vol_up.when_activated = self.on_vol_up
         vol_down = Button(self.vol_dn_pin, pull_up=None,
-                          active_state=active_state, pin_factory=NativeFactory)
+                          active_state=active_state, pin_factory=factory)
         vol_down.when_activated = self.on_vol_down
 
         self.mute_switch = Button(self.mute_pin, pull_up=None,
                                   active_state=bool(self._muted),
-                                  pin_factory=NativeFactory)
+                                  pin_factory=factory)
 
         self.mute_switch.when_deactivated = self.on_unmute
         self.mute_switch.when_activated = self.on_mute
