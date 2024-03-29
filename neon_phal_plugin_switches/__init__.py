@@ -148,8 +148,7 @@ class GPIOSwitches(AbstractSwitches, ABC):
                hold_time=0.5).when_activated = self.on_vol_down
 
         mute_active = True if bool(self._muted) == pull_up else False
-        self.mute_switch = Button(self.mute_pin, pull_up=pull_up, hold_time=0.5,
-                                  active_state=mute_active)
+        self.mute_switch = Button(self.mute_pin, active_state=mute_active)
 
         self.mute_switch.when_deactivated = self.on_unmute
         self.mute_switch.when_activated = self.on_mute
