@@ -33,7 +33,8 @@ from ovos_plugin_manager.phal import PHALPlugin
 from ovos_plugin_manager.hardware.switches import AbstractSwitches
 from ovos_utils.log import LOG
 from ovos_bus_client.message import Message
-from gpiozero import Button, pi_info, BadPinFactory
+from gpiozero import Button, pi_info, BadPinFactory, Device
+from gpiozero.pins.native import NativeFactory
 
 
 class SwitchValidator:
@@ -50,6 +51,7 @@ class SwitchValidator:
 
 
 class SwitchInputs(PHALPlugin):
+    Device.pin_factory = NativeFactory()
     validator = SwitchValidator
 
     def __init__(self, bus=None, config=None):
