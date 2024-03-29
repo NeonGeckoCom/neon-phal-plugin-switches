@@ -129,6 +129,7 @@ class GPIOSwitches(AbstractSwitches, ABC):
         self.on_unmute = unmute_callback
 
         self.mute_switch: Optional[Button] = None
+        self._buttons = list()
 
         self.vol_up_pin = volup_pin
         self.vol_dn_pin = voldown_pin
@@ -159,6 +160,11 @@ class GPIOSwitches(AbstractSwitches, ABC):
         self.mute_switch.when_deactivated = self.on_unmute
         self.mute_switch.when_activated = self.on_mute
 
+        # Keep references to buttons to keep listeners alive until shutdown
+        self._buttons.append(act)
+        self._buttons.append(vol_up)
+        self._buttons.append(vol_down)
+
         LOG.info(f"Pin states: vol_up={vol_up.is_active}, "
                  f"vol_down={vol_down.is_active}, act={act.is_active}, "
                  f"mute={self.mute_switch.is_active}")
@@ -168,4 +174,6 @@ class GPIOSwitches(AbstractSwitches, ABC):
         return {}
 
     def shutdown(self):
-        pass
+        # Release GPIO buttons explicitly
+        self._buttons = None
+        self.mute_switch = None
