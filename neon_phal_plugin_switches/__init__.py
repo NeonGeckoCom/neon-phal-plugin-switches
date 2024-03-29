@@ -57,29 +57,12 @@ class SwitchInputs(PHALPlugin):
                                      voldown_callback=self.on_button_voldown_press,
                                      mute_callback=self.on_hardware_mute,
                                      unmute_callback=self.on_hardware_unmute)
-        self.switches.on_mute = self.on_hardware_mute
-        self.switches.on_unmute = self.on_hardware_unmute
-        self.switches.on_action = self.on_button_press
-        self.switches.on_vol_up = self.on_button_volup_press
-        self.switches.on_vol_down = self.on_button_voldown_press
 
         if self.switches.mute_switch.is_active:
             LOG.debug(f"Mute switch active")
             self.bus.emit(Message('mycroft.mic.mute'))
 
         self.bus.on('mycroft.mic.status', self.on_mic_status)
-
-    @property
-    def gpio_device(self):
-        if self.config.get("gpio_device"):
-            LOG.debug(f"GIPIO device from config: {self.config['gpio_device']}")
-            return self.config.get("gpio_device")
-        if exists("/dev/gpiochip4"):
-            LOG.info("Selecting gpiochip4")
-            return "gpiochip4"
-        if exists("/dev/gpiochip0"):
-            return "gpiochip0"
-        raise RuntimeError(f"No GPIO device available")
 
     def on_mic_status(self, message):
         if self.switches.mute_switch.is_active:
@@ -151,29 +134,23 @@ class GPIOSwitches(AbstractSwitches, ABC):
 
         self.setup_gpio(pull_up=sw_pullup)
 
-    @property
-    def muted(self):
-        """
-        Returns the state associated with 'mute' (0 for low, 1 for hi)
-        """
-        return self._muted
-
-    def setup_gpio(self, debounce: int = 0.1, pull_up: bool = True):
+    def setup_gpio(self, pull_up: bool = True):
         """
         Do GPIO setup.
-        @param debounce: bounce time in seconds for button presses
         @param pull_up: If true, pull up switches, else pull down
         """
 
         Button(self.action_pin, pull_up=pull_up,
-               bounce_time=debounce).when_activated = self.on_action
+               hold_time=0.5).when_activated = self.on_action
         Button(self.vol_up_pin, pull_up=pull_up,
-               bounce_time=debounce).when_activated = self.on_vol_up
+               hold_time=0.5).when_activated = self.on_vol_up
         Button(self.vol_dn_pin, pull_up=pull_up,
-               bounce_time=debounce).when_activated = self.on_vol_down
+               hold_time=0.5).when_activated = self.on_vol_down
 
-        self.mute_switch = Button(self.mute_pin, pull_up=pull_up,
-                                  bounce_time=debounce)
+        mute_active = True if bool(self._muted) == pull_up else False
+        self.mute_switch = Button(self.mute_pin, pull_up=pull_up, hold_time=0.5,
+                                  active_state=mute_active)
+
         self.mute_switch.when_deactivated = self.on_unmute
         self.mute_switch.when_activated = self.on_mute
 
