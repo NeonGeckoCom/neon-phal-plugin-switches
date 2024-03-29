@@ -51,7 +51,6 @@ class SwitchValidator:
 
 
 class SwitchInputs(PHALPlugin):
-    Device.pin_factory = NativeFactory()
     validator = SwitchValidator
 
     def __init__(self, bus=None, config=None):
@@ -147,17 +146,19 @@ class GPIOSwitches(AbstractSwitches, ABC):
         @param active_state: If true, switches are active when high
         """
 
-        act = Button(self.action_pin, pull_up=None, active_state=active_state)
+        act = Button(self.action_pin, pull_up=None, active_state=active_state,
+                     pin_factory=NativeFactory)
         act.when_activated = self.on_action
         vol_up = Button(self.vol_up_pin, pull_up=None,
-                        active_state=active_state)
+                        active_state=active_state, pin_factory=NativeFactory)
         vol_up.when_activated = self.on_vol_up
         vol_down = Button(self.vol_dn_pin, pull_up=None,
-                          active_state=active_state)
+                          active_state=active_state, pin_factory=NativeFactory)
         vol_down.when_activated = self.on_vol_down
 
         self.mute_switch = Button(self.mute_pin, pull_up=None,
-                                  active_state=bool(self._muted))
+                                  active_state=bool(self._muted),
+                                  pin_factory=NativeFactory)
 
         self.mute_switch.when_deactivated = self.on_unmute
         self.mute_switch.when_activated = self.on_mute
