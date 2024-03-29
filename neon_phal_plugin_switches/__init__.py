@@ -106,7 +106,7 @@ class GPIOSwitches(AbstractSwitches, ABC):
                  mute_callback: callable, unmute_callback: callable,
                  volup_pin: int = 22, voldown_pin: int = 23,
                  action_pin: int = 24, mute_pin: int = 25,
-                 sw_muted_state: int = 1, sw_pullup: bool = True):
+                 sw_muted_state: int = 1, sw_press_state: int = 0):
         """
         Creates an object to manage GPIO switches and callbacks on switch
         activity.
@@ -120,7 +120,7 @@ class GPIOSwitches(AbstractSwitches, ABC):
         @param action_pin: GPIO pin of the action switch
         @param mute_pin: GPIO pin of the mute slider
         @param sw_muted_state: mute pin state associated with muted
-        @param sw_pullup: if True, pull up switches, else pull down
+        @param sw_press_state button pin state associated with a press
         """
         self.on_action = action_callback
         self.on_vol_up = volup_callback
@@ -136,24 +136,25 @@ class GPIOSwitches(AbstractSwitches, ABC):
         self.mute_pin = mute_pin
         self._muted = sw_muted_state
 
-        self.setup_gpio(pull_up=sw_pullup)
+        self.setup_gpio(active_state=bool(sw_press_state))
 
-    def setup_gpio(self, pull_up: bool = True):
+    def setup_gpio(self, active_state: bool = True):
         """
         Do GPIO setup.
-        @param pull_up: If true, pull up switches, else pull down
+        @param active_state: If true, switches are active when high
         """
 
-        act = Button(self.action_pin, pull_up=pull_up)
+        act = Button(self.action_pin, pull_up=None, active_state=active_state)
         act.when_activated = self.on_action
-        vol_up = Button(self.vol_up_pin, pull_up=pull_up)
+        vol_up = Button(self.vol_up_pin, pull_up=None,
+                        active_state=active_state)
         vol_up.when_activated = self.on_vol_up
-        vol_down = Button(self.vol_dn_pin, pull_up=pull_up)
+        vol_down = Button(self.vol_dn_pin, pull_up=None,
+                          active_state=active_state)
         vol_down.when_activated = self.on_vol_down
 
-        mute_active = True if bool(self._muted) == pull_up else False
         self.mute_switch = Button(self.mute_pin, pull_up=None,
-                                  active_state=mute_active)
+                                  active_state=bool(self._muted))
 
         self.mute_switch.when_deactivated = self.on_unmute
         self.mute_switch.when_activated = self.on_mute
