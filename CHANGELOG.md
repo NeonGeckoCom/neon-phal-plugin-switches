@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.5a2](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/tree/0.0.5a2) (2024-04-08)
+
+[Full Changelog](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/compare/0.0.5a1...0.0.5a2)
+
+**Merged pull requests:**
+
+- Update ovos-utils to allow 0.X versions [\#18](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/pull/18) ([NeonDaniel](https://github.com/NeonDaniel))
+
 ## [0.0.5a1](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/tree/0.0.5a1) (2023-06-15)
 
 [Full Changelog](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/compare/0.0.4...0.0.5a1)
