@@ -1,25 +1,20 @@
 # Changelog
 
-## [0.0.5a2](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/tree/0.0.5a2) (2024-04-08)
+## [0.0.6a2](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/tree/0.0.6a2) (2025-03-14)
 
-[Full Changelog](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/compare/0.0.5a1...0.0.5a2)
-
-**Merged pull requests:**
-
-- Update ovos-utils to allow 0.X versions [\#18](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/pull/18) ([NeonDaniel](https://github.com/NeonDaniel))
-
-## [0.0.5a1](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/tree/0.0.5a1) (2023-06-15)
-
-[Full Changelog](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/compare/0.0.4...0.0.5a1)
-
-**Implemented enhancements:**
-
-- \[FEAT\] Update automation [\#12](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/issues/12)
+[Full Changelog](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/compare/0.0.6a1...0.0.6a2)
 
 **Merged pull requests:**
 
-- Update GH Automation to default branch [\#14](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/pull/14) ([NeonDaniel](https://github.com/NeonDaniel))
-- Update Automation to test non-inherited secrets [\#13](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/pull/13) ([NeonDaniel](https://github.com/NeonDaniel))
+- Remove unused `version_bump`, update dependencies and license notices [\#21](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/pull/21) ([NeonDaniel](https://github.com/NeonDaniel))
+
+## [0.0.6a1](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/tree/0.0.6a1) (2024-09-19)
+
+[Full Changelog](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/compare/0.0.5...0.0.6a1)
+
+**Merged pull requests:**
+
+- Update dependencies to allow OVOS 0.x dependency resolution [\#20](https://github.com/NeonGeckoCom/neon-phal-plugin-switches/pull/20) ([NeonDaniel](https://github.com/NeonDaniel))
 
 
 
